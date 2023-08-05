@@ -29,6 +29,11 @@ const geojsonPoint = {
   "features": []
 };
 
+const geojsonSelectedPoint = {
+  "type": "FeatureCollection",
+  "features": []
+};
+
 for( let name in set ){
   
   /* 後できちんと作りたい
@@ -61,13 +66,40 @@ for( let name in set ){
       // "_weight": 0.5
     }
   };
-  
+
   let minp = 9999;
   set[name].forEach( c => {
+      
       f.geometry.coordinates.push([+c[3], +c[2]]);
       minp = Math.min(+c[4], minp);
       f.properties["最低中心気圧"] = minp;
+      
+      const fp = {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [+c[3], +c[2]]
+        },
+        "properties": {
+          "name": name + "_" + c[1],
+          "日時": c[1],
+          "中心気圧": +c[4],
+          "最大風速": +c[5],
+          "50kt長径": +c[7],
+          "クラス": +c[13]
+        }
+      };
+      
+      if(c[12].match(/\S/)) fp.properties["上陸"] = c[12];
+      
+      geojsonPoint.features.push(fp);
+      
+      // 930 hPa 以下の場合は追加
+      if( +c[4] < 931) geojsonSelectedPoint.features.push(fp);
+      
+      
       if(c[12].match(/\S/)){
+        f.properties["上陸"] = c[12];
         f.properties["上陸回数"] = f.properties["上陸回数"] ? f.properties["上陸回数"] + 1 : 1;
         
         const ji = f.properties["上陸回数"];
@@ -88,6 +120,7 @@ for( let name in set ){
           },
           "properties": {
             "name": name + "_上陸" + ji,
+            "上陸": c[12],
             "上陸回数": ji,
             "上陸日時": c[1],
             "上陸緯度": +c[2],
@@ -96,7 +129,7 @@ for( let name in set ){
           }
         };
         
-        geojsonPoint.features.push(pt);
+        geojsonSelectedPoint.features.push(pt);
       }
   });
   
@@ -111,7 +144,14 @@ fs.writeFile(`./tyhoon-course.geojson`, JSON.stringify(geojson, null, 2), (e) =>
   }
 });
 
-fs.writeFile(`./tyhoon-jouriku-point.geojson`, JSON.stringify(geojsonPoint, null, 2), (e) => {
+fs.writeFile(`./tyhoon-point.geojson`, JSON.stringify(geojsonPoint, null, 2), (e) => {
+  if(e){
+    console.log(`ERROR: (write file)`);
+    console.error(e);
+  }
+});
+
+fs.writeFile(`./tyhoon-selected-point.geojson`, JSON.stringify(geojsonSelectedPoint, null, 2), (e) => {
   if(e){
     console.log(`ERROR: (write file)`);
     console.error(e);

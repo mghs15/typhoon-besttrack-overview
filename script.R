@@ -13,10 +13,12 @@ tail(tdf)
 
 pairs(tdf[,c(3,4,5)], panel = panel.smooth)
 
-plot(tdf$経度, tdf$中心気圧, col=1, type = "p", main="緯度と中心気圧の関係")
+#--------------------------------------
+
+plot(tdf$緯度, tdf$中心気圧, col=1, type = "p", main="緯度と中心気圧の関係")
 abline(v=35.5, col="red") #東京横浜
 abline(v=33.5, col="red", lty=2)　#紀伊半島
-abline(v=33.25, col="red", lty=2)　#室戸岬
+# abline(v=33.25, col="red", lty=2)　#室戸岬
 abline(v=31, col="red", lty=2)　#大隅半島
 abline(v=30, col="red")　#30度
 abline(v=26.2, col="red", lty=2)　#那覇市
@@ -24,6 +26,32 @@ abline(h=911.8, col="red") #室戸台風
 abline(h=929.6, col="red") #伊勢湾台風
 abline(h=940, col="red", lty=2)　#
 abline(h=965, col="red", lty=2)　#
+
+
+tdf2 <- subset(df, df[,1]=="1979T20_TIP")
+lines(tdf2$緯度, tdf2$中心気圧, col=4, lwd=4)
+
+tdf2 <- subset(df, df[,1]=="1973T15_NORA")
+lines(tdf2$緯度, tdf2$中心気圧, col=4, lwd=4)
+
+tdf2 <- subset(df, df[,1]=="1975T20_JUNE")
+lines(tdf2$緯度, tdf2$中心気圧, col=4, lwd=4)
+
+tdf2 <- subset(df, df[,1]=="1958T22_IDA")
+lines(tdf2$緯度, tdf2$中心気圧, col=4, lwd=4)
+lines(tdf2$緯度, tdf2$中心気圧, col=1, lwd=2, lty=2)
+
+tdf2 <- subset(df, df[,1]=="1959T15_VERA")
+lines(tdf2$緯度, tdf2$中心気圧, col=2, lwd=4)
+
+tdf2 <- subset(df, df[,1]=="1961T18_NANCY")
+lines(tdf2$緯度, tdf2$中心気圧, col=7, lwd=4)
+
+#--------------------------------------
+
+sub <- subset(df, df[,3]>30)
+sub <- subset(sub, sub[,5]<=930)
+write.csv(sub, "tyhoon-bst-subset-30N-930hPa.csv", row.names = FALSE)
 
 #--------------------------------------
 
