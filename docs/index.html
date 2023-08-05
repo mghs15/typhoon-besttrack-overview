@@ -6,6 +6,7 @@
 <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
 <script src='https://unpkg.com/maplibre-gl@^2.4/dist/maplibre-gl.js'></script>
 <link href='https://unpkg.com/maplibre-gl@^2.4/dist/maplibre-gl.css' rel='stylesheet' />
+<script src="https://unpkg.com/pmtiles@2.5.0/dist/index.js"></script>
 <style>
 body { margin:0; padding:0;}
 
@@ -65,11 +66,11 @@ button.small {
 }
 
 #slider_01 {
-  //width: 80%;
+  width: 100%;
 }
 
 #slider_02 {
-  //width: 80%;
+  width: 100%;
 }
 
 #note {
@@ -149,7 +150,25 @@ const inputSetting = [
     "placeholder": "2019 T19 HAGIBIS",
     "default": "",
     "newline": false
-  }
+  },
+  {
+    "id": "slider_01",
+    "type": "slider",
+    "title": "中心気圧上限",
+    "min": 850,
+    "max": 1020,
+    "default": 1020,
+    "newline": true
+  },
+  {
+    "id": "slider_02",
+    "type": "slider",
+    "title": "中心気圧下限",
+    "min": 850,
+    "max": 1020,
+    "default": 850,
+    "newline": true
+  },
 ];
 
 const overlayStyle = {
@@ -163,7 +182,11 @@ const overlayStyle = {
        },
       "my-source-2": {
          "keyName": "name", //選択リストに利用するKEYとなる属性値名,
-         "title": "上陸（再上陸）・通過直前の位置（一部の台風のみ）"
+         "title": "位置（ZL6以上で表示）"
+       },
+      "my-source-3": {
+         "keyName": "name", //選択リストに利用するKEYとなる属性値名,
+         "title": "上陸（一部）又は930 hP 以下"
        },
     }
   },
@@ -172,13 +195,20 @@ const overlayStyle = {
       // type: geojson の場合 metadata を記述するとエラー
       type: 'geojson',
       data: './tyhoon-course.geojson',
-      attribution: "気象庁（Best Track）"
+      attribution: "気象庁（ベストトラック）"
     },
     'my-source-2': {
+      type: 'vector',
+      url: 'pmtiles://https://mghs15.github.io/typhoon-besttrack-overview/bst-point.pmtiles',
+      minzoom: 6,
+      maxzoom: 6,
+      attribution: "気象庁（ベストトラック）"
+    },
+    'my-source-3': {
       // type: geojson の場合 metadata を記述するとエラー
       type: 'geojson',
-      data: './tyhoon-jouriku-point.geojson',
-      attribution: "気象庁（Best Track）"
+      data: './tyhoon-selected-point.geojson',
+      attribution: "気象庁（ベストトラック）"
     }
   },
   "layers": [
@@ -186,7 +216,7 @@ const overlayStyle = {
       'metadata': {
         'isMainLayer': true
       },
-      'id': 'my-layer-01-main-01',
+      'id': 'my-main-layer-1',
       'type': 'line',
       'source': 'my-source',
       'layout': {
@@ -202,7 +232,7 @@ const overlayStyle = {
       'metadata': {
         'isSelectedLayer': true
       },
-      'id': 'my-layer-01-select-01',
+      'id': 'my-selected-layer-1',
       'type': 'line',
       'source': 'my-source',
       'layout': {
@@ -214,14 +244,17 @@ const overlayStyle = {
         'line-width': 4
       }
     },
-
+    // ---------------------------------------------
     {
       'metadata': {
         'isMainLayer': true
       },
-      'id': 'my-main-layer',
+      'id': 'my-main-layer-2',
       'type': 'circle',
       'source': 'my-source-2',
+      'source-layer': 'point',
+      'minzoom': 6,
+      'maxzoom': 22,
       'layout': {
         'visibility': 'visible'
       },
@@ -231,19 +264,87 @@ const overlayStyle = {
           11,4,
           15,8
         ],
-        'circle-color': ['rgb', 255, 0, 0],
+        'circle-color': [
+          "interpolate",
+          ["linear"],
+          ["coalesce", ["get", "中心気圧"], ["get", "上陸中心気圧"]],
+          900,
+          'blue',
+          1000,
+          'white',
+        ],
         'circle-opacity': 1,
-        'circle-stroke-color': ['rgba', 255, 255, 255,1],
-        'circle-stroke-width': 2
+        'circle-stroke-color': ['rgba', 0, 0, 255, 1],
+        'circle-stroke-width': 1
       }
     },
     {
       'metadata': {
         'isSelectedLayer': true
       },
-      'id': 'my-selected-layer',
+      'id': 'my-selected-layer-2',
       'type': 'circle',
       'source': 'my-source-2',
+      'source-layer': 'point',
+      'minzoom': 6,
+      'maxzoom': 22,
+      'layout': {
+        'visibility': 'visible'
+      },
+      'paint': {
+        'circle-radius': [
+          "interpolate", ["linear"], ["zoom"],
+          11,5,
+          15,9
+        ],
+        'circle-color': ['rgba', 200, 200, 255, 0],
+        'circle-stroke-color': ['rgba', 255,100,100,1],
+        'circle-stroke-width': 6
+      }
+    },
+    // ---------------------------------------------
+    {
+      'metadata': {
+        'isMainLayer': false
+      },
+      'id': 'my-main-layer-3',
+      'type': 'circle',
+      'source': 'my-source-3',
+      'maxzoom': 6,
+      'layout': {
+        'visibility': 'visible'
+      },
+      'paint': {
+        'circle-radius': [
+          "interpolate", ["linear"], ["zoom"],
+          11,4,
+          15,8
+        ],
+        'circle-color': [
+          "interpolate",
+          ["linear"],
+          ["coalesce", ["get", "中心気圧"], ["get", "上陸中心気圧"]],
+          900,
+          'blue',
+          1000,
+          'white',
+        ],
+        'circle-opacity': 1,
+        'circle-stroke-color': [
+           "case",
+           ["has", "上陸回数"], ['rgba', 255, 0, 0, 1],
+           ['rgba', 0, 0, 255, 1],
+        ],
+        'circle-stroke-width': 1
+      }
+    },/*
+    {
+      'metadata': {
+        'isSelectedLayer': true
+      },
+      'id': 'my-selected-layer-3',
+      'type': 'circle',
+      'source': 'my-source-3',
       'layout': {
         'visibility': 'visible'
       },
@@ -257,7 +358,7 @@ const overlayStyle = {
         'circle-stroke-color': ['rgba', 255,100,100,1],
         'circle-stroke-width': 6
       }
-    },
+    },*/
   ]
 };
 
@@ -413,7 +514,7 @@ for( source in overlayStyle.sources){
 }
 
 /*************************************************/
-/*Mapbox 関係設定                                */
+/*Maplibre 関係設定                              */
 /*************************************************/
 const map = new maplibregl.Map({
   container: 'map', // container id
@@ -457,6 +558,11 @@ map.addControl(new maplibregl.AttributionControl({compact: true}), 'top-right');
 
 map.showTileBoundaries = false;
 
+/*************************************************/
+/*PMTILES 関係設定                               */
+/*************************************************/
+let protocol = new pmtiles.Protocol();
+maplibregl.addProtocol("pmtiles",protocol.tile);
 
 /*************************************************/
 /*UI 関係設定                                    */
@@ -525,14 +631,39 @@ const makeFilter = () => {
   
   const inputValues = getInputValues();
   
+  document.getElementById("note").innerHTML = `<span>
+    中心気圧：${+inputValues["slider_02"]}～${+inputValues["slider_01"]} hPa
+    <br>
+    出典：台風ベストトラックデータ（気象庁）
+  </span>`;
+  
   const filter = [
     "all",
     /*
     [">=", ["get", "scale"], +inputValues["select_01"] ],
     ["<=", ["get", "scale"], +inputValues["select_02"] ],
-    [">=", ["to-number", ["slice", ["get", "date"], 0, 4]], +inputValues["slider_01"] ],
-    ["<=", ["to-number", ["slice", ["get", "date"], 0, 4]], +inputValues["slider_02"] ]
     */
+    [
+      "any",
+      [
+        "all",
+        ["!", ["has", "中心気圧"]],
+        ["!", ["has", "上陸中心気圧"]],
+      ],
+      [
+        "all",
+        [
+          "<=", 
+          ["coalesce", ["get", "中心気圧"], ["get", "上陸中心気圧"]],
+           +inputValues["slider_01"]
+        ],
+        [
+          ">=", 
+          ["coalesce", ["get", "中心気圧"], ["get", "上陸中心気圧"]],
+          +inputValues["slider_02"] 
+        ]
+      ]
+    ]
   ];
   
   if(inputValues["text_01"]){
@@ -545,7 +676,7 @@ const makeFilter = () => {
   }
   
   if(inputValues["select_01"] == "上陸"){
-    filter.push(["has", "上陸回数"]);
+    filter.push(["has", "上陸"]);
   }
   
   console.log(filter);
@@ -855,21 +986,24 @@ const makeListHtml = (myList) => {
       
       console.log(prop);
       
-      if(sourceId == "my-source-2"){
-        let propHtml = `<li>${prop.name} - 上陸（再上陸）直前の位置情報</li>`;
+      if(sourceId == "my-source-2" || sourceId == "my-source-3"){
+        let propHtml = `<li>${prop.name} - 位置情報</li>`;
         
         propHtml += `<ul>`;
-        propHtml += `<li>上陸日時：${prop["上陸日時"]}</li>`;
-        propHtml += `<li>上陸緯度：${prop["上陸緯度"]}</li>`;
-        propHtml += `<li>上陸経度：${prop["上陸経度"]}</li>`;
-        propHtml += `<li>上陸中心気圧：${prop["上陸中心気圧" ]}</li>`;
+        propHtml += `<li>日時：${prop["日時"]}</li>`;
+        //propHtml += `<li>緯度：${prop["緯度"]}</li>`;
+        //propHtml += `<li>経度：${prop["経度"]}</li>`;
+        propHtml += `<li>中心気圧：${prop["中心気圧" ]}</li>`;
+        propHtml += `<li>最大風速：${prop["最大風速" ]}</li>`;
+        propHtml += `<li>50kt長径：${prop["50kt長径" ]}</li>`;
+        propHtml += `<li>クラス：${prop["クラス" ]}</li>`;
         propHtml += `</ul>`;
         
         listHtml = listHtml + "<li>" + propHtml + "</li>";
         continue;
       }
       
-      let propHtml = `<li>${prop.name}</li>`;
+      let propHtml = `<li>${prop.name} - 台風情報</li>`;
       propHtml += "<ol>"; 
       
       if(prop["上陸回数"]){
