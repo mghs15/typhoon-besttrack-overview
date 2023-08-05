@@ -172,13 +172,13 @@ const overlayStyle = {
       // type: geojson の場合 metadata を記述するとエラー
       type: 'geojson',
       data: './tyhoon-course.geojson',
-      attribution: "気象庁（台風位置表）"
+      attribution: "気象庁（Best Track）"
     },
     'my-source-2': {
       // type: geojson の場合 metadata を記述するとエラー
       type: 'geojson',
       data: './tyhoon-jouriku-point.geojson',
-      attribution: "気象庁（台風位置表）"
+      attribution: "気象庁（Best Track）"
     }
   },
   "layers": [
@@ -430,7 +430,7 @@ const map = new maplibregl.Map({
             "tileSize": 256,
             "minzoom": 2,
             "maxzoom": 18,
-            "attribution": "国土地理院最適化ベクトルタイル(標準地図風スタイル)"
+            "attribution": "地理院タイル"
         }
     },
     "layers": [
