@@ -3,6 +3,8 @@
 
 https://mghs15.github.io/typhoon-besttrack-overview/
 
+Blog (Qiita) https://qiita.com/mg_kudo/items/a59c7883f839c21ed6c6
+
 ## data
 Japan Meteorological Agency
 
